@@ -172,7 +172,7 @@ def print_commits(commits, template):
     sorted(commits, key=lambda commit: commit['ts'])
     commits.reverse()
     for c in commits:
-        print(template.format(
+        click.echo(template.format(
             t=TERM,
             commit=c['commit'],
             ts=c['ts'].strftime('%H:%M:%S'),
@@ -184,10 +184,10 @@ def print_commits(commits, template):
 
 def print_day(dstr, commits, template):
     day = parser.parse(dstr)
-    print('------------------------------------------------------------------------')
-    print(day.strftime('%Y-%m-%d %A'))
+    click.echo('------------------------------------------------------------------------')
+    click.echo(day.strftime('%Y-%m-%d %A'))
     print_commits(commits, template)
-    print('')
+    click.echo('')
     
 
 if __name__ == '__main__':
