@@ -29,12 +29,12 @@ EXAMPLES
     python timesheets.py $LISTOFREPOS --month=2017-05
 """
 
-import argparse
 import calendar
 from datetime import date,datetime
 import os
 
 from blessings import Terminal
+import click
 import git
 from dateutil import parser
 
@@ -151,43 +151,38 @@ def print_day(dstr, commits, template):
     print('')
 
 
-def main():
-    
-    parser = argparse.ArgumentParser(
-        description=DESCRIPTION,
-        epilog=EPILOG,
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    #parser.add_argument('pos', help='Positional arg')
-    parser.add_argument('filename', help='Filename containing list of abs paths to repositories.')
-    parser.add_argument('-s', '--start', help='Start date (ex: "2017-05-01")')
-    parser.add_argument('-e', '--end', help='End date (ex: "2017-05-31")')
-    parser.add_argument('-m', '--month', help='Month (ex: "2017-05")')
-    args = parser.parse_args()
+@click.command()
+@click.option('-s','--start', help='Start date (ex: "2017-05-01")')
+@click.option('-e','--end',   help='End date (ex: "2017-05-31")')
+@click.option('-m','--month', help='Month (ex: "2017-05")')
+@click.argument('filename')
+def main(start, end, month, filename):
+    """
+    filename: Filename containing list of abs paths to repositories.
+    """
 
-    if not (args.month or (args.start and args.end)):
+    if not (month or (start and end)):
         raise Exception('Enter start/end dates or a month.')
 
-    start,end = get_start_end(start=args.start, end=args.end, month=args.month)
-    print('start: %s' % start)
-    print('  end: %s' % end)
-    print('')
+    start,end = get_start_end(start=start, end=end, month=month)
+    click.echo('start: %s' % start)
+    click.echo('  end: %s' % end)
+    click.echo('')
     
     commits_by_date = {}
     
-    print('Reading list...')
-    REPOS = get_repos_list(args.filename)
+    click.echo('Reading list...')
+    REPOS = get_repos_list(filename)
     
-    print('Gathering data...')
+    click.echo('Gathering data...')
     for path in REPOS:
-        print(path)
+        click.echo(path)
         repo = get_repo(path)
         commits = repo_commits(repo, start, end)
         commits_by_date = assign_to_date(commits, commits_by_date)
-    print('')
+    click.echo('')
 
-    dates = commits_by_date.keys()
-    dates.sort()
+    dates = sorted(commits_by_date.keys())
 
     for d in dates:
         commits = commits_by_date[d]
