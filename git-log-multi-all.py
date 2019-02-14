@@ -47,6 +47,45 @@ TEMPLATE = '{ts} ' \
            '{t.red}[{branch}]{t.normal} ' \
            '{subject}'
 
+
+@click.command()
+@click.option('-s','--start', help='Start date (ex: "2017-05-01")')
+@click.option('-e','--end',   help='End date (ex: "2017-05-31")')
+@click.option('-m','--month', help='Month (ex: "2017-05")')
+@click.argument('filename')
+def main(start, end, month, filename):
+    """
+    filename: Filename containing list of abs paths to repositories.
+    """
+
+    if not (month or (start and end)):
+        raise Exception('Enter start/end dates or a month.')
+
+    start,end = get_start_end(start=start, end=end, month=month)
+    click.echo('start: %s' % start)
+    click.echo('  end: %s' % end)
+    click.echo('')
+    
+    commits_by_date = {}
+    
+    click.echo('Reading list...')
+    REPOS = get_repos_list(filename)
+    
+    click.echo('Gathering data...')
+    for path in REPOS:
+        click.echo(path)
+        repo = get_repo(path)
+        commits = repo_commits(repo, start, end)
+        commits_by_date = assign_to_date(commits, commits_by_date)
+    click.echo('')
+
+    dates = sorted(commits_by_date.keys())
+
+    for d in dates:
+        commits = commits_by_date[d]
+        print_day(d, commits, TEMPLATE)
+
+
 def get_repos_list(filename):
     with open(filename, 'r') as f:
         return [
@@ -149,44 +188,6 @@ def print_day(dstr, commits, template):
     print(day.strftime('%Y-%m-%d %A'))
     print_commits(commits, template)
     print('')
-
-
-@click.command()
-@click.option('-s','--start', help='Start date (ex: "2017-05-01")')
-@click.option('-e','--end',   help='End date (ex: "2017-05-31")')
-@click.option('-m','--month', help='Month (ex: "2017-05")')
-@click.argument('filename')
-def main(start, end, month, filename):
-    """
-    filename: Filename containing list of abs paths to repositories.
-    """
-
-    if not (month or (start and end)):
-        raise Exception('Enter start/end dates or a month.')
-
-    start,end = get_start_end(start=start, end=end, month=month)
-    click.echo('start: %s' % start)
-    click.echo('  end: %s' % end)
-    click.echo('')
-    
-    commits_by_date = {}
-    
-    click.echo('Reading list...')
-    REPOS = get_repos_list(filename)
-    
-    click.echo('Gathering data...')
-    for path in REPOS:
-        click.echo(path)
-        repo = get_repo(path)
-        commits = repo_commits(repo, start, end)
-        commits_by_date = assign_to_date(commits, commits_by_date)
-    click.echo('')
-
-    dates = sorted(commits_by_date.keys())
-
-    for d in dates:
-        commits = commits_by_date[d]
-        print_day(d, commits, TEMPLATE)
     
 
 if __name__ == '__main__':
